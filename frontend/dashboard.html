@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Trading Bot League</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0B0F19;
+            color: #E5E7EB;
+        }
+        
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-opacity-80 backdrop-blur-md bg-gray-900 border-b border-gray-800">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="text-2xl font-bold">
+                    <a href="index.html">
+                        <span class="text-blue-500">Trading</span>
+                        <span class="text-white">Bot League</span>
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex space-x-8">
+                    <a href="index.html" class="hover:text-blue-400 transition">Home</a>
+                    <a href="leaderboard.html" class="hover:text-blue-400 transition">Leaderboard</a>
+                    <a href="dashboard.html" class="text-blue-400">Dashboard</a>
+                    <a href="#docs" class="hover:text-blue-400 transition">Docs</a>
+                </div>
+                
+                <div class="flex space-x-4">
+                    <button class="px-4 py-2 text-sm hover:text-blue-400 transition">Sign Out</button>
+                    <button class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold transition">
+                        Create Bot
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Header -->
+    <section class="pt-32 pb-8 bg-gradient-to-b from-gray-950 to-gray-900">
+        <div class="container mx-auto px-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-black mb-2">
+                        My Dashboard
+                    </h1>
+                    <p class="text-gray-400">
+                        Manage your bots and track performance
+                    </p>
+                </div>
+                <button class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition transform hover:scale-105" onclick="showCreateBotModal()">
+                    + New Bot
+                </button>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Stats Overview -->
+    <section class="py-8 bg-gray-900">
+        <div class="container mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="stat-card-dashboard">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-400 text-sm mb-1">Total Bots</p>
+                            <p class="text-3xl font-bold mono" id="total-bots">0</p>
+                        </div>
+                        <div class="text-4xl">🤖</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-dashboard">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-400 text-sm mb-1">Avg Return</p>
+                            <p class="text-3xl font-bold mono text-green-400" id="avg-return">+0%</p>
+                        </div>
+                        <div class="text-4xl">📈</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-dashboard">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-400 text-sm mb-1">Total Trades</p>
+                            <p class="text-3xl font-bold mono" id="total-trades">0</p>
+                        </div>
+                        <div class="text-4xl">💹</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-dashboard">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-400 text-sm mb-1">Best Rank</p>
+                            <p class="text-3xl font-bold mono text-yellow-400" id="best-rank">-</p>
+                        </div>
+                        <div class="text-4xl">🏆</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- My Bots -->
+    <section class="py-12 bg-gray-900">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold mb-8">My Bots</h2>
+            
+            <div id="bots-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Populated by JavaScript -->
+            </div>
+            
+            <!-- Empty State -->
+            <div id="empty-bots" class="text-center py-20 hidden">
+                <div class="text-6xl mb-4">🤖</div>
+                <h3 class="text-2xl font-bold mb-2">No Bots Yet</h3>
+                <p class="text-gray-400 mb-6">Create your first trading bot to get started</p>
+                <button class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition" onclick="showCreateBotModal()">
+                    Create Your First Bot
+                </button>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Recent Trades -->
+    <section class="py-12 bg-gray-950">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold mb-8">Recent Trades</h2>
+            
+            <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-900 border-b border-gray-700">
+                            <tr>
+                                <th class="py-4 px-6 text-gray-400 font-semibold">Time</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold">Bot</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold">Ticker</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold">Action</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold text-right">Price</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold text-right">Quantity</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold text-right">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-trades">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- API Keys -->
+    <section class="py-12 bg-gray-900">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold mb-8">API Keys</h2>
+            
+            <div class="bg-gray-800 rounded-2xl border border-gray-700 p-8">
+                <p class="text-gray-400 mb-6">
+                    Your bots use API keys to authenticate when submitting trade signals. Keep these keys secure.
+                </p>
+                
+                <div id="api-keys-list" class="space-y-4">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Create Bot Modal -->
+    <div id="create-bot-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-2xl p-8 max-w-md w-full mx-4 border border-gray-700">
+            <h2 class="text-2xl font-bold mb-6">Create New Bot</h2>
+            
+            <form id="create-bot-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Bot Name</label>
+                    <input type="text" id="bot-name" class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500" placeholder="My Trading Bot" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Strategy Type</label>
+                    <select id="strategy-type" class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500" required>
+                        <option value="">Select Strategy</option>
+                        <option value="ML">Machine Learning</option>
+                        <option value="HFT">High Frequency</option>
+                        <option value="Sentiment">Sentiment Analysis</option>
+                        <option value="Technical">Technical Analysis</option>
+                        <option value="Arbitrage">Arbitrage</option>
+                        <option value="Custom">Custom</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Description (Optional)</label>
+                    <textarea id="bot-description" class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500" rows="3" placeholder="Describe your strategy..."></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Initial Capital</label>
+                    <input type="number" id="initial-capital" class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500" value="100000" required>
+                </div>
+                
+                <div class="flex gap-4 pt-4">
+                    <button type="submit" class="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition">
+                        Create Bot
+                    </button>
+                    <button type="button" onclick="hideCreateBotModal()" class="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-950 border-t border-gray-800 py-12 mt-20">
+        <div class="container mx-auto px-6">
+            <div class="text-center text-gray-500">
+                <p>&copy; 2026 Trading Bot League. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

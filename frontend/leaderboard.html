@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - Trading Bot League</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0B0F19;
+            color: #E5E7EB;
+        }
+        
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-opacity-80 backdrop-blur-md bg-gray-900 border-b border-gray-800">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="text-2xl font-bold">
+                    <a href="index.html">
+                        <span class="text-blue-500">Trading</span>
+                        <span class="text-white">Bot League</span>
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex space-x-8">
+                    <a href="index.html" class="hover:text-blue-400 transition">Home</a>
+                    <a href="leaderboard.html" class="text-blue-400">Leaderboard</a>
+                    <a href="dashboard.html" class="hover:text-blue-400 transition">Dashboard</a>
+                    <a href="#docs" class="hover:text-blue-400 transition">Docs</a>
+                </div>
+                
+                <div class="flex space-x-4">
+                    <button class="px-4 py-2 text-sm hover:text-blue-400 transition">Sign In</button>
+                    <button class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold transition">
+                        Get Started
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Header -->
+    <section class="pt-32 pb-16 bg-gradient-to-b from-gray-950 to-gray-900">
+        <div class="container mx-auto px-6">
+            <div class="text-center">
+                <h1 class="text-5xl md:text-6xl font-black mb-4">
+                    Leaderboard
+                </h1>
+                <p class="text-xl text-gray-400">
+                    Real-time rankings of top performing bots
+                </p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Filters -->
+    <section class="py-8 bg-gray-900 sticky top-16 z-40 border-b border-gray-800">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row gap-6 items-center justify-between">
+                <!-- League Filter -->
+                <div>
+                    <label class="text-sm text-gray-400 mb-2 block">League</label>
+                    <div class="flex gap-2 flex-wrap">
+                        <button class="filter-btn active" data-league="global">Global</button>
+                        <button class="filter-btn" data-league="ML">ML</button>
+                        <button class="filter-btn" data-league="HFT">HFT</button>
+                        <button class="filter-btn" data-league="Sentiment">Sentiment</button>
+                        <button class="filter-btn" data-league="Technical">Technical</button>
+                        <button class="filter-btn" data-league="Arbitrage">Arbitrage</button>
+                    </div>
+                </div>
+                
+                <!-- Period Filter -->
+                <div>
+                    <label class="text-sm text-gray-400 mb-2 block">Period</label>
+                    <div class="flex gap-2">
+                        <button class="filter-btn" data-period="week">Week</button>
+                        <button class="filter-btn active" data-period="month">Month</button>
+                        <button class="filter-btn" data-period="year">Year</button>
+                        <button class="filter-btn" data-period="5year">5 Years</button>
+                    </div>
+                </div>
+                
+                <!-- Live Indicator -->
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="text-sm text-gray-400">Live Updates</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Leaderboard Table -->
+    <section class="py-12 bg-gray-900">
+        <div class="container mx-auto px-6">
+            <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden shadow-2xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-900 border-b border-gray-700">
+                            <tr>
+                                <th class="py-4 px-6 text-gray-400 font-semibold">Rank</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold">Bot Name</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold">Strategy</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold text-right">Return</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold text-right">Sharpe Ratio</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold text-right">Max DD</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold text-right">Win Rate</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold text-right">Trades</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-table">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Loading State -->
+                <div id="loading" class="text-center py-12">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                    <p class="text-gray-400 mt-4">Loading leaderboard...</p>
+                </div>
+                
+                <!-- Empty State -->
+                <div id="empty-state" class="text-center py-12 hidden">
+                    <p class="text-gray-400">No bots found for this league and period.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Performance Chart -->
+    <section class="py-12 bg-gray-950">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold mb-8">Top 10 Performance Chart</h2>
+            <div class="bg-gray-800 rounded-2xl border border-gray-700 p-8">
+                <canvas id="performance-chart" width="400" height="150"></canvas>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-950 border-t border-gray-800 py-12 mt-20">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Trading Bot League</h3>
+                    <p class="text-gray-500">The premier platform for algorithmic trading competition.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Platform</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-blue-400">Leaderboard</a></li>
+                        <li><a href="#" class="hover:text-blue-400">Leagues</a></li>
+                        <li><a href="#" class="hover:text-blue-400">Pricing</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Developers</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-blue-400">API Docs</a></li>
+                        <li><a href="#" class="hover:text-blue-400">SDK</a></li>
+                        <li><a href="#" class="hover:text-blue-400">Examples</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Company</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-blue-400">About</a></li>
+                        <li><a href="#" class="hover:text-blue-400">Blog</a></li>
+                        <li><a href="#" class="hover:text-blue-400">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500">
+                <p>&copy; 2026 Trading Bot League. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/leaderboard.js"></script>
+</body>
+</html>

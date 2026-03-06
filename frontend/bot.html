@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Profile - Trading Bot League</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0B0F19;
+            color: #E5E7EB;
+        }
+        
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-opacity-80 backdrop-blur-md bg-gray-900 border-b border-gray-800">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="text-2xl font-bold">
+                    <a href="index.html">
+                        <span class="text-blue-500">Trading</span>
+                        <span class="text-white">Bot League</span>
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex space-x-8">
+                    <a href="index.html" class="hover:text-blue-400 transition">Home</a>
+                    <a href="leaderboard.html" class="hover:text-blue-400 transition">Leaderboard</a>
+                    <a href="dashboard.html" class="hover:text-blue-400 transition">Dashboard</a>
+                    <a href="#docs" class="hover:text-blue-400 transition">Docs</a>
+                </div>
+                
+                <div class="flex space-x-4">
+                    <button class="px-4 py-2 text-sm hover:text-blue-400 transition">Sign In</button>
+                    <button class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold transition">
+                        Get Started
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Bot Header -->
+    <section class="pt-32 pb-12 bg-gradient-to-b from-gray-950 to-gray-900">
+        <div class="container mx-auto px-6">
+            <div class="flex items-start justify-between">
+                <div>
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-2xl">
+                            🤖
+                        </div>
+                        <div>
+                            <h1 class="text-4xl md:text-5xl font-black" id="bot-name">
+                                Loading...
+                            </h1>
+                            <p class="text-xl text-gray-400 mt-1" id="bot-strategy">
+                                <!-- Strategy Type -->
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <p class="text-gray-400 max-w-2xl" id="bot-description">
+                        <!-- Bot Description -->
+                    </p>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full" id="bot-status-indicator"></div>
+                        <span class="text-sm" id="bot-status-text">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Performance Metrics -->
+    <section class="py-8 bg-gray-900">
+        <div class="container mx-auto px-6">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
+                <div class="metric-card">
+                    <p class="text-sm text-gray-400 mb-1">Total Return</p>
+                    <p class="text-3xl font-bold mono" id="metric-return">+0%</p>
+                </div>
+                
+                <div class="metric-card">
+                    <p class="text-sm text-gray-400 mb-1">Sharpe Ratio</p>
+                    <p class="text-3xl font-bold mono" id="metric-sharpe">0.00</p>
+                </div>
+                
+                <div class="metric-card">
+                    <p class="text-sm text-gray-400 mb-1">Max Drawdown</p>
+                    <p class="text-3xl font-bold mono text-red-400" id="metric-drawdown">0%</p>
+                </div>
+                
+                <div class="metric-card">
+                    <p class="text-sm text-gray-400 mb-1">Win Rate</p>
+                    <p class="text-3xl font-bold mono" id="metric-winrate">0%</p>
+                </div>
+                
+                <div class="metric-card">
+                    <p class="text-sm text-gray-400 mb-1">Total Trades</p>
+                    <p class="text-3xl font-bold mono" id="metric-trades">0</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Rankings -->
+    <section class="py-8 bg-gray-950">
+        <div class="container mx-auto px-6">
+            <h2 class="text-2xl font-bold mb-6">League Rankings</h2>
+            <div id="rankings-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </section>
+    
+    <!-- Period Selector -->
+    <section class="py-4 bg-gray-900 border-y border-gray-800">
+        <div class="container mx-auto px-6">
+            <div class="flex gap-2">
+                <button class="period-btn" data-period="week">Week</button>
+                <button class="period-btn active" data-period="month">Month</button>
+                <button class="period-btn" data-period="year">Year</button>
+                <button class="period-btn" data-period="5year">5 Years</button>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Equity Curve Chart -->
+    <section class="py-12 bg-gray-900">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold mb-8">Equity Curve</h2>
+            <div class="bg-gray-800 rounded-2xl border border-gray-700 p-8">
+                <canvas id="equity-chart" height="100"></canvas>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Performance Over Time -->
+    <section class="py-12 bg-gray-950">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold mb-8">Returns Distribution</h2>
+            <div class="bg-gray-800 rounded-2xl border border-gray-700 p-8">
+                <canvas id="returns-chart" height="100"></canvas>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Trade History -->
+    <section class="py-12 bg-gray-900">
+        <div class="container mx-auto px-6">
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-3xl font-bold">Trade History</h2>
+                <button class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition">
+                    Export CSV
+                </button>
+            </div>
+            
+            <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-900 border-b border-gray-700">
+                            <tr>
+                                <th class="py-4 px-6 text-gray-400 font-semibold">Time</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold">Ticker</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold">Action</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold text-right">Price</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold text-right">Quantity</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold text-right">Value</th>
+                                <th class="py-4 px-6 text-gray-400 font-semibold text-right">P/L</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trade-history">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Strategy Description -->
+    <section class="py-12 bg-gray-950">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold mb-8">Strategy Details</h2>
+            <div class="bg-gray-800 rounded-2xl border border-gray-700 p-8">
+                <div class="prose max-w-none text-gray-300" id="strategy-details">
+                    <p>Loading strategy details...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Positions -->
+    <section class="py-12 bg-gray-900">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold mb-8">Current Positions</h2>
+            <div class="bg-gray-800 rounded-2xl border border-gray-700 p-8">
+                <div id="positions-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Populated by JavaScript -->
+                </div>
+                
+                <div id="no-positions" class="text-center py-12 text-gray-400 hidden">
+                    No open positions
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-950 border-t border-gray-800 py-12 mt-20">
+        <div class="container mx-auto px-6">
+            <div class="text-center text-gray-500">
+                <p>&copy; 2026 Trading Bot League. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/bot.js"></script>
+</body>
+</html>

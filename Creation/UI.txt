@@ -1,0 +1,229 @@
+Visual Design Language
+Theme
+
+Dark trading theme.
+
+background: #0B0F19
+card: #121826
+accent: #3B82F6
+profit: #22C55E
+loss: #EF4444
+Typography
+
+Primary font:
+
+Inter
+
+Secondary:
+
+JetBrains Mono
+
+Mono font used for:
+
+prices
+
+returns
+
+statistics
+
+5. Homepage Design
+Structure
+Hero Section
+Leaderboard Preview
+How it Works
+Strategy Categories
+Live Trades Feed
+CTA
+Animated Hero Section
+
+Large animated background.
+
+Implementation options:
+
+Particle network
+particles.js
+or
+
+3D grid using
+
+Three.js
+Example HTML
+<section class="hero">
+
+<div id="particles"></div>
+
+<h1 class="title">
+Compete With Trading Bots
+</h1>
+
+<p class="subtitle">
+Real performance. Real rankings.
+</p>
+
+<button class="cta">
+Create Your Bot
+</button>
+
+</section>
+6. Motion Design
+
+Smooth transitions make the site feel premium.
+
+Page Transitions
+
+Use JS to fade between pages.
+
+Example:
+
+opacity: 0 → 1
+transform: translateY(20px → 0)
+duration: 400ms
+Card Hover Effects
+
+Leaderboard cards should animate.
+
+Example:
+
+scale: 1 → 1.05
+shadow increase
+background glow
+Ranking Changes
+
+If a bot moves in leaderboard:
+
+Animate movement.
+
+Example:
+
+position shift animation
+color flash (green/red)
+7. Leaderboard UI
+
+This is the core feature.
+
+Layout
+Filter Bar
+Leaderboard Table
+Performance Chart
+Live Trades Feed
+Filters
+
+Users should filter by:
+
+league
+
+strategy
+
+timeframe
+
+Example:
+
+[Global] [ML] [HFT] [Sentiment]
+
+[Week] [Month] [Year] [5Y]
+Leaderboard Table
+
+Columns:
+
+Rank
+Bot Name
+Strategy
+Return
+Sharpe
+Drawdown
+Trades
+Animated Rank Movement
+
+If rank changes:
+
+slide animation
+
+Example JS logic:
+
+if rank_changed:
+    animate_row()
+8. Bot Profile Page
+
+Displays detailed stats.
+
+Layout
+Bot Header
+Performance Chart
+Metrics
+Trade History
+Strategy Description
+Interactive Equity Curve
+
+Using Chart.js.
+
+Features:
+
+zoom
+
+hover values
+
+timeframe selector
+
+Example JS:
+
+const chart = new Chart(ctx, {
+ type: 'line',
+ data: equityData,
+ options: {
+   responsive: true,
+   interaction: {
+     intersect: false
+   }
+ }
+});
+9. Dashboard Page
+
+User control center.
+
+Sections
+My Bots
+Performance Overview
+Recent Trades
+API Keys
+Bot Cards
+
+Cards show:
+
+Bot name
+Return
+Ranking
+Status
+
+Hover animation:
+
+elevate card
+glow border
+10. Live Trade Feed
+
+Scrolling real-time feed.
+
+Example:
+
+BOT_X BUY BTC +0.4%
+BOT_Y SELL AAPL -0.2%
+BOT_Z BUY ETH +1.1%
+
+Use WebSockets.
+
+WebSocket Architecture
+
+Backend sends updates.
+
+FastAPI WebSocket
+↓
+Redis PubSub
+↓
+Frontend JS
+
+Example JS:
+
+const socket = new WebSocket("wss://site.com/ws");
+
+socket.onmessage = (event) => {
+   updateTradeFeed(JSON.parse(event.data));
+};
