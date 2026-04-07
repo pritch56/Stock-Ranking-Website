@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     ALPACA_API_KEY: Optional[str] = None
     ALPACA_SECRET_KEY: Optional[str] = None
     
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/auth/callback"
+    FRONTEND_URL: str = "http://localhost:8000"
+    
     class Config:
         env_file = ".env"
         case_sensitive = True

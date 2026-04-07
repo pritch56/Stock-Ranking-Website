@@ -1,25 +1,41 @@
 // Dashboard JavaScript
 
-const API_BASE_URL = (() => {
+// DASH_API_URL is declared in auth.js (without /api suffix)
+const DASH_API_URL = (() => {
     const { protocol, hostname } = window.location;
     const port = hostname === 'localhost' ? ':8000' : '';
     return `${protocol}//${hostname}${port}/api`;
 })();
 
-// Mock user ID (in production, get from auth)
-const USER_ID = 'user-123';
+let USER_ID = null;
 
 // Initialize page
-document.addEventListener('DOMContentLoaded', () => {
-    loadDashboard();
-    setupCreateBotForm();
+document.addEventListener('DOMContentLoaded', async () => {
+    // Require authentication
+    const authData = await requireAuth();
+    if (authData) {
+        USER_ID = authData.user_id;
+        loadDashboard();
+        setupCreateBotForm();
+        setupSignOutButton();
+    }
 });
+
+// Setup sign out button
+function setupSignOutButton() {
+    const signOutBtn = document.getElementById('dash-signout');
+    if (signOutBtn) {
+        signOutBtn.addEventListener('click', () => {
+            logout();
+        });
+    }
+}
 
 // Load dashboard data
 async function loadDashboard() {
     try {
         // Load user's bots
-        const response = await fetch(`${API_BASE_URL}/users/${USER_ID}/bots`);
+        const response = await fetch(`${DASH_API_URL}/users/${USER_ID}/bots`);
         const data = await response.json();
         
         if (data.bots.length === 0) {
@@ -108,7 +124,7 @@ async function updateStats(bots) {
     document.getElementById('best-rank').textContent = '...';
 
     try {
-        const response = await fetch(`${API_BASE_URL}/leaderboard?period=month&limit=100`);
+        const response = await fetch(`${DASH_API_URL}/leaderboard?period=month&limit=100`);
         if (!response.ok) throw new Error('leaderboard unavailable');
         const data = await response.json();
         const botIds = new Set(bots.map(b => b.bot_id));
@@ -130,7 +146,7 @@ async function loadRecentTrades(bots) {
 
     try {
         const botIds = new Set(bots.map(b => b.bot_id));
-        const response = await fetch(`${API_BASE_URL}/trades/live?limit=50`);
+        const response = await fetch(`${DASH_API_URL}/trades/live?limit=50`);
         if (!response.ok) throw new Error('fetch failed');
         const data = await response.json();
 
@@ -205,7 +221,7 @@ function setupCreateBotForm() {
         };
         
         try {
-            const response = await fetch(`${API_BASE_URL}/bots`, {
+            const response = await fetch(`${DASH_API_URL}/bots`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -248,7 +264,7 @@ async function toggleBot(botId, isActive) {
     const endpoint = isActive ? 'deactivate' : 'activate';
     
     try {
-        const response = await fetch(`${API_BASE_URL}/bots/${botId}/${endpoint}`, {
+        const response = await fetch(`${DASH_API_URL}/bots/${botId}/${endpoint}`, {
             method: 'PATCH'
         });
         

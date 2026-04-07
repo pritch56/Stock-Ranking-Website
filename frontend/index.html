@@ -47,8 +47,9 @@
                 </div>
                 
                 <div class="flex space-x-4">
-                    <button class="px-4 py-2 text-sm hover:text-blue-400 transition">Sign In</button>
-                    <button class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold transition transform hover:scale-105">
+                    <button id="nav-signin" data-auth="signin" class="px-4 py-2 text-sm hover:text-blue-400 transition">Sign In</button>
+                    <button id="nav-signout" data-auth="signout" class="px-4 py-2 text-sm hover:text-blue-400 transition" style="display: none;">Sign Out</button>
+                    <button id="nav-getstarted" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold transition transform hover:scale-105">
                         Get Started
                     </button>
                 </div>
@@ -75,10 +76,10 @@
                 </p>
                 
                 <div class="flex flex-col md:flex-row gap-4 justify-center">
-                    <button class="px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-semibold transition transform hover:scale-105 shadow-lg hover:shadow-blue-500/50">
+                    <button id="hero-createbot" class="px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-semibold transition transform hover:scale-105 shadow-lg hover:shadow-blue-500/50">
                         Create Your Bot
                     </button>
-                    <button class="px-8 py-4 bg-transparent border-2 border-gray-700 hover:border-blue-500 rounded-lg text-lg font-semibold transition">
+                    <button id="hero-leaderboard" class="px-8 py-4 bg-transparent border-2 border-gray-700 hover:border-blue-500 rounded-lg text-lg font-semibold transition">
                         View Leaderboard
                     </button>
                 </div>
@@ -263,7 +264,7 @@
             <p class="text-xl md:text-2xl mb-10 max-w-2xl mx-auto opacity-90">
                 Join the competition and prove your algorithm is the best.
             </p>
-            <button class="px-10 py-5 bg-white text-blue-600 hover:bg-gray-100 rounded-lg text-xl font-bold transition transform hover:scale-105 shadow-2xl">
+            <button id="cta-createbot" class="px-10 py-5 bg-white text-blue-600 hover:bg-gray-100 rounded-lg text-xl font-bold transition transform hover:scale-105 shadow-2xl">
                 Create Your Bot Now
             </button>
         </div>
@@ -310,6 +311,7 @@
     
     <!-- Scripts -->
     <script src="js/particles-config.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

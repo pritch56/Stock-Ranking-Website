@@ -1,6 +1,7 @@
 // Main JavaScript for index.html
 
-const API_BASE_URL = (() => {
+// API_BASE_URL is declared in auth.js (without /api suffix)
+const MAIN_API_URL = (() => {
     const { protocol, hostname } = window.location;
     const port = hostname === 'localhost' ? ':8000' : '';
     return `${protocol}//${hostname}${port}/api`;
@@ -11,7 +12,7 @@ let liveTradesInterval = null;
 // Populate leaderboard preview
 async function loadLeaderboardPreview() {
     try {
-        const response = await fetch(`${API_BASE_URL}/leaderboard?period=month&limit=5`);
+        const response = await fetch(`${MAIN_API_URL}/leaderboard?period=month&limit=5`);
         const data = await response.json();
         
         const tbody = document.getElementById('preview-leaderboard');
@@ -95,7 +96,7 @@ async function loadLiveTrades() {
     const container = document.getElementById('live-trades');
 
     try {
-        const response = await fetch(`${API_BASE_URL}/trades/live?limit=8`);
+        const response = await fetch(`${MAIN_API_URL}/trades/live?limit=8`);
         if (!response.ok) throw new Error('fetch failed');
         const data = await response.json();
         container.innerHTML = '';
@@ -166,4 +167,71 @@ function formatCurrency(value) {
 document.addEventListener('DOMContentLoaded', () => {
     loadLeaderboardPreview();
     loadLiveTrades();
+    setupButtonHandlers();
 });
+
+// Setup button click handlers
+function setupButtonHandlers() {
+    // Navigation Sign In button
+    const signInBtn = document.getElementById('nav-signin');
+    if (signInBtn) {
+        signInBtn.addEventListener('click', () => {
+            login();
+        });
+    }
+    
+    // Navigation Sign Out button
+    const signOutBtn = document.getElementById('nav-signout');
+    if (signOutBtn) {
+        signOutBtn.addEventListener('click', () => {
+            logout();
+        });
+    }
+    
+    // Navigation Get Started button
+    const getStartedBtn = document.getElementById('nav-getstarted');
+    if (getStartedBtn) {
+        getStartedBtn.addEventListener('click', async () => {
+            const authData = await checkAuth();
+            if (authData) {
+                window.location.href = 'dashboard.html';
+            } else {
+                login(); // Prompt login first
+            }
+        });
+    }
+    
+    // Hero Create Your Bot button
+    const createBotBtn = document.getElementById('hero-createbot');
+    if (createBotBtn) {
+        createBotBtn.addEventListener('click', async () => {
+            const authData = await checkAuth();
+            if (authData) {
+                window.location.href = 'dashboard.html';
+            } else {
+                login();
+            }
+        });
+    }
+    
+    // Hero View Leaderboard button
+    const leaderboardBtn = document.getElementById('hero-leaderboard');
+    if (leaderboardBtn) {
+        leaderboardBtn.addEventListener('click', () => {
+            window.location.href = 'leaderboard.html';
+        });
+    }
+
+    // CTA Create Your Bot Now button
+    const ctaBtn = document.getElementById('cta-createbot');
+    if (ctaBtn) {
+        ctaBtn.addEventListener('click', async () => {
+            const authData = await checkAuth();
+            if (authData) {
+                window.location.href = 'dashboard.html';
+            } else {
+                login();
+            }
+        });
+    }
+}
