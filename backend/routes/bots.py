@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import desc
 from pydantic import BaseModel
 from database import get_db
 from models import Bot, Trade, Performance
@@ -185,6 +186,36 @@ async def list_bots(
             for b in bots
         ]
     }
+
+@router.get("/trades/live")
+async def get_live_trades(limit: int = 20, db: Session = Depends(get_db)):
+    """
+    Recent trades across all bots, newest first.
+    Used by the live feed on the homepage and dashboard.
+    """
+    results = db.query(Trade, Bot).join(
+        Bot, Bot.id == Trade.bot_id
+    ).order_by(
+        desc(Trade.timestamp)
+    ).limit(limit).all()
+
+    return {
+        "trades": [
+            {
+                "trade_id": trade.id,
+                "bot_id": bot.id,
+                "bot_name": bot.name,
+                "ticker": trade.ticker,
+                "action": trade.action.value,
+                "quantity": trade.quantity,
+                "price": trade.price,
+                "value": trade.value,
+                "timestamp": trade.timestamp.isoformat()
+            }
+            for trade, bot in results
+        ]
+    }
+
 
 @router.patch("/bots/{bot_id}/activate")
 async def activate_bot(bot_id: str, db: Session = Depends(get_db)):

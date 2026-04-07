@@ -8,8 +8,8 @@ router = APIRouter()
 
 @router.get("/leaderboard")
 async def get_leaderboard(
-    period: str = Query("month", regex="^(week|month|year|5year)$"),
-    league: str = Query("global", regex="^(global|ML|HFT|Sentiment|Technical|Arbitrage)$"),
+    period: str = Query("month", pattern="^(week|month|year|5year)$"),
+    league: str = Query("global", pattern="^(global|ML|HFT|Sentiment|Technical|Arbitrage)$"),
     limit: int = Query(100, le=1000),
     db: Session = Depends(get_db)
 ):

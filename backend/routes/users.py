@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from database import get_db
 from models import User
 
 router = APIRouter()
 
 class CreateUserRequest(BaseModel):
-    email: EmailStr
+    email: str
 
 @router.post("/users")
 async def create_user(

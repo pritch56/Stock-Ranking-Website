@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from models import Bot, Trade, Signal, TradeAction
 from config import settings
-import httpx
 import random
 from datetime import datetime
 

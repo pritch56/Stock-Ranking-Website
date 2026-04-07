@@ -32,7 +32,7 @@ class LeaderboardEngine:
         
         # Filter by league/strategy if not global
         if league != "global":
-            query = query.filter(Bot.strategy_type == league.upper())
+            query = query.filter(Bot.strategy_type == league)
         
         # Order by risk-adjusted score (Sharpe ratio * return)
         results = query.all()
@@ -114,55 +114,50 @@ class LeaderboardEngine:
     
     def get_bot_ranking(self, bot_id: str, period: str = "month") -> Dict:
         """Get ranking information for a specific bot"""
-        
-        rankings = self.db.query(Ranking).filter(
+
+        results = self.db.query(Ranking, League).join(
+            League, League.id == Ranking.league_id
+        ).filter(
             and_(
                 Ranking.bot_id == bot_id,
                 Ranking.period == period
             )
         ).all()
-        
-        result = {
+
+        return {
             "bot_id": bot_id,
             "period": period,
-            "rankings": []
+            "rankings": [
+                {
+                    "league": league.name,
+                    "rank": ranking.rank,
+                    "previous_rank": ranking.previous_rank,
+                    "score": ranking.score
+                }
+                for ranking, league in results
+            ]
         }
-        
-        for ranking in rankings:
-            league = self.db.query(League).filter(League.id == ranking.league_id).first()
-            
-            result["rankings"].append({
-                "league": league.name if league else "Unknown",
-                "rank": ranking.rank,
-                "previous_rank": ranking.previous_rank,
-                "score": ranking.score
-            })
-        
-        return result
     
     def get_top_performers(self, limit: int = 10) -> List[Dict]:
         """Get top performing bots across all time"""
-        
-        # Get bots with best overall performance
-        performances = self.db.query(Performance).filter(
-            Performance.period == "year"
+
+        results = self.db.query(Bot, Performance).join(
+            Performance,
+            and_(Bot.id == Performance.bot_id, Performance.period == "year")
         ).order_by(
             desc(Performance.total_return)
         ).limit(limit).all()
-        
-        top_bots = []
-        for perf in performances:
-            bot = self.db.query(Bot).filter(Bot.id == perf.bot_id).first()
-            if bot:
-                top_bots.append({
-                    "bot_id": bot.id,
-                    "bot_name": bot.name,
-                    "strategy": bot.strategy_type,
-                    "return": perf.total_return,
-                    "sharpe_ratio": perf.sharpe_ratio
-                })
-        
-        return top_bots
+
+        return [
+            {
+                "bot_id": bot.id,
+                "bot_name": bot.name,
+                "strategy": bot.strategy_type,
+                "return": perf.total_return,
+                "sharpe_ratio": perf.sharpe_ratio
+            }
+            for bot, perf in results
+        ]
     
     def initialize_leagues(self):
         """Initialize default leagues"""

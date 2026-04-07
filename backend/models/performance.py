@@ -1,13 +1,14 @@
-from sqlalchemy import Column, String, DateTime, ForeignKey, Float, Integer
+from sqlalchemy import Column, String, DateTime, ForeignKey, Float, Integer, Index
 from sqlalchemy.sql import func
 from database import Base
 
 class Performance(Base):
     __tablename__ = "performance"
-    
+    __table_args__ = (Index('ix_performance_bot_period', 'bot_id', 'period'),)
+
     id = Column(String, primary_key=True)  # Format: bot_id:period
-    bot_id = Column(String, ForeignKey("bots.id"), nullable=False, index=True)
-    period = Column(String, nullable=False, index=True)  # week, month, year, 5year
+    bot_id = Column(String, ForeignKey("bots.id"), nullable=False)
+    period = Column(String, nullable=False)  # week, month, year, 5year
     
     # Performance Metrics
     total_return = Column(Float, default=0.0)

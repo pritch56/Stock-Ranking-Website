@@ -93,43 +93,32 @@ class PerformanceEngine:
         return round(return_pct, 4)
     
     def calculate_sharpe_ratio(self, trades: list, initial_capital: float) -> float:
-        """Calculate Sharpe Ratio (risk-adjusted return)"""
-        
+        """Calculate annualised Sharpe Ratio using daily net P&L as the return series"""
+        from collections import defaultdict
+
         if len(trades) < 2:
             return 0.0
-        
-        # Calculate daily returns
-        returns = []
-        capital = initial_capital
-        
+
+        daily_pnl: dict = defaultdict(float)
         for trade in trades:
-            if trade.action.value == "BUY":
-                capital -= trade.value
+            day = trade.timestamp.date()
+            if trade.action.value == "SELL":
+                daily_pnl[day] += trade.value
             else:
-                capital += trade.value
-            
-            daily_return = (capital - initial_capital) / initial_capital
-            returns.append(daily_return)
-        
-        if not returns:
+                daily_pnl[day] -= trade.value
+
+        if len(daily_pnl) < 2:
             return 0.0
-        
-        # Calculate mean and std dev of returns
-        mean_return = sum(returns) / len(returns)
-        
-        variance = sum((r - mean_return) ** 2 for r in returns) / len(returns)
+
+        returns = [pnl / initial_capital for pnl in daily_pnl.values()]
+        mean_r = sum(returns) / len(returns)
+        variance = sum((r - mean_r) ** 2 for r in returns) / len(returns)
         std_dev = math.sqrt(variance)
-        
+
         if std_dev == 0:
             return 0.0
-        
-        # Sharpe Ratio (assuming risk-free rate = 0 for simplicity)
-        sharpe = mean_return / std_dev
-        
-        # Annualize (assuming 252 trading days)
-        sharpe_annualized = sharpe * math.sqrt(252)
-        
-        return round(sharpe_annualized, 2)
+
+        return round((mean_r / std_dev) * math.sqrt(252), 2)
     
     def calculate_max_drawdown(self, trades: list, initial_capital: float) -> float:
         """Calculate maximum drawdown (largest peak-to-trough decline)"""

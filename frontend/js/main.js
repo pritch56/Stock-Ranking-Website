@@ -1,6 +1,12 @@
 // Main JavaScript for index.html
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = (() => {
+    const { protocol, hostname } = window.location;
+    const port = hostname === 'localhost' ? ':8000' : '';
+    return `${protocol}//${hostname}${port}/api`;
+})();
+
+let liveTradesInterval = null;
 
 // Populate leaderboard preview
 async function loadLeaderboardPreview() {
@@ -85,72 +91,60 @@ function loadMockLeaderboard() {
 }
 
 // Populate live trades feed
-function loadLiveTrades() {
-    const tradesContainer = document.getElementById('live-trades');
-    
-    // Mock trade data
-    const mockTrades = [
-        { bot: 'AlphaBot Pro', action: 'BUY', ticker: 'BTC', change: '+0.4%' },
-        { bot: 'Lightning Trader', action: 'SELL', ticker: 'AAPL', change: '-0.2%' },
-        { bot: 'Sentiment King', action: 'BUY', ticker: 'ETH', change: '+1.1%' },
-        { bot: 'TechBot X', action: 'BUY', ticker: 'TSLA', change: '+0.7%' },
-        { bot: 'ArbitrageX', action: 'SELL', ticker: 'SPY', change: '-0.3%' },
-        { bot: 'DeepTrader', action: 'BUY', ticker: 'GOOGL', change: '+0.5%' },
-        { bot: 'QuickBot', action: 'SELL', ticker: 'MSFT', change: '-0.1%' },
-        { bot: 'SmartTrader', action: 'BUY', ticker: 'AMZN', change: '+0.8%' }
-    ];
-    
-    mockTrades.forEach((trade, index) => {
-        const tradeElement = document.createElement('div');
-        tradeElement.className = `trade-item ${trade.action.toLowerCase()}`;
-        tradeElement.style.animationDelay = `${index * 0.1}s`;
-        
-        tradeElement.innerHTML = `
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <span class="font-semibold text-sm">${trade.bot}</span>
-                    <span class="px-2 py-1 rounded text-xs font-bold ${
-                        trade.action === 'BUY' ? 'bg-green-500 bg-opacity-20 text-green-400' : 'bg-red-500 bg-opacity-20 text-red-400'
-                    }">${trade.action}</span>
-                    <span class="mono text-sm text-gray-400">${trade.ticker}</span>
-                </div>
-                <span class="mono text-sm font-semibold ${
-                    trade.change.startsWith('+') ? 'text-green-400' : 'text-red-400'
-                }">${trade.change}</span>
-            </div>
-        `;
-        
-        tradesContainer.appendChild(tradeElement);
-    });
-    
-    // Simulate new trades coming in
-    setInterval(() => {
-        const randomTrade = mockTrades[Math.floor(Math.random() * mockTrades.length)];
-        const tradeElement = document.createElement('div');
-        tradeElement.className = `trade-item ${randomTrade.action.toLowerCase()}`;
-        
-        tradeElement.innerHTML = `
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <span class="font-semibold text-sm">${randomTrade.bot}</span>
-                    <span class="px-2 py-1 rounded text-xs font-bold ${
-                        randomTrade.action === 'BUY' ? 'bg-green-500 bg-opacity-20 text-green-400' : 'bg-red-500 bg-opacity-20 text-red-400'
-                    }">${randomTrade.action}</span>
-                    <span class="mono text-sm text-gray-400">${randomTrade.ticker}</span>
-                </div>
-                <span class="mono text-sm font-semibold ${
-                    randomTrade.change.startsWith('+') ? 'text-green-400' : 'text-red-400'
-                }">${randomTrade.change}</span>
-            </div>
-        `;
-        
-        tradesContainer.insertBefore(tradeElement, tradesContainer.firstChild);
-        
-        // Remove old trades to keep feed manageable
-        if (tradesContainer.children.length > 10) {
-            tradesContainer.removeChild(tradesContainer.lastChild);
+async function loadLiveTrades() {
+    const container = document.getElementById('live-trades');
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/trades/live?limit=8`);
+        if (!response.ok) throw new Error('fetch failed');
+        const data = await response.json();
+        container.innerHTML = '';
+        data.trades.forEach((trade, index) => {
+            container.appendChild(buildTradeEl(trade, index * 0.05));
+        });
+    } catch {
+        container.innerHTML = '<p class="text-gray-500 text-sm px-4">No recent trades.</p>';
+    }
+
+    connectLiveFeedSocket(container);
+}
+
+function connectLiveFeedSocket(container) {
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsPort = window.location.hostname === 'localhost' ? ':8000' : '';
+    const ws = new WebSocket(`${wsProtocol}//${window.location.hostname}${wsPort}/ws`);
+
+    ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        if (msg.type !== 'trade') return;
+        container.insertBefore(buildTradeEl(msg.data, 0), container.firstChild);
+        while (container.children.length > 10) {
+            container.removeChild(container.lastChild);
         }
-    }, 5000);
+    };
+
+    ws.onclose = () => setTimeout(() => connectLiveFeedSocket(container), 5000);
+}
+
+function buildTradeEl(trade, delay = 0) {
+    const isBuy = trade.action === 'BUY';
+    const value = trade.value != null ? formatCurrency(trade.value) : '';
+    const el = document.createElement('div');
+    el.className = `trade-item ${isBuy ? 'buy' : 'sell'}`;
+    el.style.animationDelay = `${delay}s`;
+    el.innerHTML = `
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="font-semibold text-sm">${trade.bot_name}</span>
+                <span class="px-2 py-1 rounded text-xs font-bold ${
+                    isBuy ? 'bg-green-500 bg-opacity-20 text-green-400' : 'bg-red-500 bg-opacity-20 text-red-400'
+                }">${trade.action}</span>
+                <span class="mono text-sm text-gray-400">${trade.ticker}</span>
+            </div>
+            <span class="mono text-sm font-semibold text-gray-300">${value}</span>
+        </div>
+    `;
+    return el;
 }
 
 // Helper functions

@@ -1,6 +1,10 @@
 // Dashboard JavaScript
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = (() => {
+    const { protocol, hostname } = window.location;
+    const port = hostname === 'localhost' ? ':8000' : '';
+    return `${protocol}//${hostname}${port}/api`;
+})();
 
 // Mock user ID (in production, get from auth)
 const USER_ID = 'user-123';
@@ -91,75 +95,75 @@ function displayBots(bots) {
 }
 
 // Update statistics
-function updateStats(bots) {
+async function updateStats(bots) {
     const totalBots = bots.length;
-    const avgReturn = bots.reduce((sum, bot) => {
-        return sum + ((bot.current_capital - 100000) / 100000);
-    }, 0) / bots.length;
-    
-    const totalTrades = Math.floor(Math.random() * 10000); // Mock data
-    const bestRank = Math.floor(Math.random() * 100) + 1; // Mock data
-    
+    const avgReturn = bots.length > 0
+        ? bots.reduce((sum, bot) => sum + ((bot.current_capital - 100000) / 100000), 0) / bots.length
+        : 0;
+
     document.getElementById('total-bots').textContent = totalBots;
     document.getElementById('avg-return').textContent = formatPercent(avgReturn);
     document.getElementById('avg-return').className = `text-3xl font-bold mono ${avgReturn >= 0 ? 'text-green-400' : 'text-red-400'}`;
-    document.getElementById('total-trades').textContent = totalTrades.toLocaleString();
-    document.getElementById('best-rank').textContent = `#${bestRank}`;
+    document.getElementById('total-trades').textContent = '...';
+    document.getElementById('best-rank').textContent = '...';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/leaderboard?period=month&limit=100`);
+        if (!response.ok) throw new Error('leaderboard unavailable');
+        const data = await response.json();
+        const botIds = new Set(bots.map(b => b.bot_id));
+        const myEntries = data.leaderboard.filter(e => botIds.has(e.bot_id));
+        const totalTrades = myEntries.reduce((sum, e) => sum + (e.total_trades || 0), 0);
+        const bestRank = myEntries.length > 0 ? Math.min(...myEntries.map(e => e.rank)) : null;
+        document.getElementById('total-trades').textContent = totalTrades.toLocaleString();
+        document.getElementById('best-rank').textContent = bestRank ? `#${bestRank}` : 'N/A';
+    } catch {
+        document.getElementById('total-trades').textContent = '—';
+        document.getElementById('best-rank').textContent = '—';
+    }
 }
 
 // Load recent trades
 async function loadRecentTrades(bots) {
     const tbody = document.getElementById('recent-trades');
-    
-    // Mock trades data
-    const mockTrades = Array.from({ length: 10 }, (_, i) => ({
-        time: new Date(Date.now() - i * 3600000).toISOString(),
-        bot: bots[Math.floor(Math.random() * bots.length)],
-        ticker: ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'BTC', 'ETH'][Math.floor(Math.random() * 7)],
-        action: Math.random() > 0.5 ? 'BUY' : 'SELL',
-        price: Math.random() * 1000 + 100,
-        quantity: Math.floor(Math.random() * 100) + 1
-    }));
-    
-    tbody.innerHTML = '';
-    
-    mockTrades.forEach((trade, index) => {
-        const row = document.createElement('tr');
-        row.style.animationDelay = `${index * 0.05}s`;
-        row.className = 'animate-fade-in-up';
-        
-        const value = trade.price * trade.quantity;
-        
-        row.innerHTML = `
-            <td class="py-3 px-6 text-sm text-gray-400">
-                ${formatTime(trade.time)}
-            </td>
-            <td class="py-3 px-6 text-sm font-semibold">
-                ${trade.bot.name}
-            </td>
-            <td class="py-3 px-6 mono font-semibold">
-                ${trade.ticker}
-            </td>
-            <td class="py-3 px-6">
-                <span class="px-2 py-1 rounded text-xs font-bold ${
-                    trade.action === 'BUY' ? 'bg-green-500 bg-opacity-20 text-green-400' : 'bg-red-500 bg-opacity-20 text-red-400'
-                }">
-                    ${trade.action}
-                </span>
-            </td>
-            <td class="py-3 px-6 text-right mono">
-                ${formatCurrency(trade.price)}
-            </td>
-            <td class="py-3 px-6 text-right mono">
-                ${trade.quantity}
-            </td>
-            <td class="py-3 px-6 text-right mono font-semibold">
-                ${formatCurrency(value)}
-            </td>
-        `;
-        
-        tbody.appendChild(row);
-    });
+    tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-gray-500">Loading...</td></tr>';
+
+    try {
+        const botIds = new Set(bots.map(b => b.bot_id));
+        const response = await fetch(`${API_BASE_URL}/trades/live?limit=50`);
+        if (!response.ok) throw new Error('fetch failed');
+        const data = await response.json();
+
+        const myTrades = data.trades.filter(t => botIds.has(t.bot_id)).slice(0, 10);
+
+        if (myTrades.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-gray-500">No trades yet.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        myTrades.forEach((trade, index) => {
+            const row = document.createElement('tr');
+            row.style.animationDelay = `${index * 0.05}s`;
+            row.className = 'animate-fade-in-up';
+            row.innerHTML = `
+                <td class="py-3 px-6 text-sm text-gray-400">${formatTime(trade.timestamp)}</td>
+                <td class="py-3 px-6 text-sm font-semibold">${trade.bot_name}</td>
+                <td class="py-3 px-6 mono font-semibold">${trade.ticker}</td>
+                <td class="py-3 px-6">
+                    <span class="px-2 py-1 rounded text-xs font-bold ${
+                        trade.action === 'BUY' ? 'bg-green-500 bg-opacity-20 text-green-400' : 'bg-red-500 bg-opacity-20 text-red-400'
+                    }">${trade.action}</span>
+                </td>
+                <td class="py-3 px-6 text-right mono">${formatCurrency(trade.price)}</td>
+                <td class="py-3 px-6 text-right mono">${trade.quantity}</td>
+                <td class="py-3 px-6 text-right mono font-semibold">${formatCurrency(trade.value)}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch {
+        tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-gray-500">Could not load trades.</td></tr>';
+    }
 }
 
 // Display API keys
@@ -211,15 +215,15 @@ function setupCreateBotForm() {
             
             if (response.ok) {
                 const newBot = await response.json();
-                alert(`Bot created successfully! API Key: ${newBot.api_key}`);
+                showToast(`Bot created. API Key: ${newBot.api_key.substring(0, 16)}...`);
                 hideCreateBotModal();
                 loadDashboard();
             } else {
-                alert('Failed to create bot');
+                showToast('Failed to create bot.', 'error');
             }
         } catch (error) {
             console.error('Error creating bot:', error);
-            alert('Error creating bot. Using mock data for demo.');
+            showToast('Could not reach the API.', 'error');
             hideCreateBotModal();
         }
     });
@@ -258,7 +262,7 @@ async function toggleBot(botId, isActive) {
 
 function copyApiKey(apiKey) {
     navigator.clipboard.writeText(apiKey);
-    alert('API key copied to clipboard!');
+    showToast('API key copied to clipboard.');
 }
 
 // Show empty state
@@ -300,6 +304,24 @@ function loadMockData() {
     updateStats(mockBots);
     loadRecentTrades(mockBots);
     displayApiKeys(mockBots);
+}
+
+// Toast notification
+function showToast(message, type = 'success') {
+    const existing = document.getElementById('toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(() => toast.classList.add('toast-visible'));
+    setTimeout(() => {
+        toast.classList.remove('toast-visible');
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
 }
 
 // Helper functions

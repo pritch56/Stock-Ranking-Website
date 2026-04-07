@@ -1,6 +1,10 @@
 // Bot Profile JavaScript
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = (() => {
+    const { protocol, hostname } = window.location;
+    const port = hostname === 'localhost' ? ':8000' : '';
+    return `${protocol}//${hostname}${port}/api`;
+})();
 
 let currentPeriod = 'month';
 let botId = null;

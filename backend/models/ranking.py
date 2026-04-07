@@ -1,14 +1,18 @@
-from sqlalchemy import Column, String, ForeignKey, Integer, Float, DateTime
+from sqlalchemy import Column, String, ForeignKey, Integer, Float, DateTime, Index
 from sqlalchemy.sql import func
 from database import Base
 
 class Ranking(Base):
     __tablename__ = "rankings"
-    
+    __table_args__ = (
+        Index('ix_ranking_bot_period', 'bot_id', 'period'),
+        Index('ix_ranking_league_period', 'league_id', 'period'),
+    )
+
     id = Column(String, primary_key=True)  # Format: league_id:bot_id:period
-    league_id = Column(String, ForeignKey("leagues.id"), nullable=False, index=True)
-    bot_id = Column(String, ForeignKey("bots.id"), nullable=False, index=True)
-    period = Column(String, nullable=False, index=True)  # week, month, year, 5year
+    league_id = Column(String, ForeignKey("leagues.id"), nullable=False)
+    bot_id = Column(String, ForeignKey("bots.id"), nullable=False)
+    period = Column(String, nullable=False)  # week, month, year, 5year
     
     rank = Column(Integer, nullable=False)
     score = Column(Float, nullable=False)  # Risk-adjusted return

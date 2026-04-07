@@ -1,6 +1,10 @@
 // Leaderboard JavaScript
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = (() => {
+    const { protocol, hostname } = window.location;
+    const port = hostname === 'localhost' ? ':8000' : '';
+    return `${protocol}//${hostname}${port}/api`;
+})();
 
 let currentPeriod = 'month';
 let currentLeague = 'global';
@@ -198,7 +202,9 @@ function updateChart(topBots) {
 // Connect to WebSocket for live updates
 function connectWebSocket() {
     try {
-        ws = new WebSocket('ws://localhost:8000/ws');
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsPort = window.location.hostname === 'localhost' ? ':8000' : '';
+        ws = new WebSocket(`${wsProtocol}//${window.location.hostname}${wsPort}/ws`);
         
         ws.onopen = () => {
             console.log('WebSocket connected');
