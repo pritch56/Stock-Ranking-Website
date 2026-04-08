@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 from typing import Optional
 
 class Settings(BaseSettings):
@@ -35,6 +36,13 @@ class Settings(BaseSettings):
     ALPACA_API_KEY: Optional[str] = None
     ALPACA_SECRET_KEY: Optional[str] = None
     
+    @field_validator("SLIPPAGE_BPS")
+    @classmethod
+    def slippage_non_negative(cls, v: float) -> float:
+        if v < 0:
+            raise ValueError("SLIPPAGE_BPS must be non-negative")
+        return v
+
     # Google OAuth
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""

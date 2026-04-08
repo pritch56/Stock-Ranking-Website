@@ -35,7 +35,8 @@ function setupSignOutButton() {
 async function loadDashboard() {
     try {
         // Load user's bots
-        const response = await fetch(`${DASH_API_URL}/users/${USER_ID}/bots`);
+        const response = await fetch(`${DASH_API_URL}/users/${USER_ID}/bots`, { credentials: 'include' });
+        if (response.status === 401) { window.location.href = '/'; return; }
         const data = await response.json();
         
         if (data.bots.length === 0) {
@@ -124,7 +125,7 @@ async function updateStats(bots) {
     document.getElementById('best-rank').textContent = '...';
 
     try {
-        const response = await fetch(`${DASH_API_URL}/leaderboard?period=month&limit=100`);
+        const response = await fetch(`${DASH_API_URL}/leaderboard?period=month&limit=1000`);
         if (!response.ok) throw new Error('leaderboard unavailable');
         const data = await response.json();
         const botIds = new Set(bots.map(b => b.bot_id));
@@ -213,7 +214,6 @@ function setupCreateBotForm() {
         e.preventDefault();
         
         const botData = {
-            user_id: USER_ID,
             name: document.getElementById('bot-name').value,
             strategy_type: document.getElementById('strategy-type').value,
             description: document.getElementById('bot-description').value,
@@ -226,6 +226,7 @@ function setupCreateBotForm() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                credentials: 'include',
                 body: JSON.stringify(botData)
             });
             
@@ -265,9 +266,11 @@ async function toggleBot(botId, isActive) {
     
     try {
         const response = await fetch(`${DASH_API_URL}/bots/${botId}/${endpoint}`, {
-            method: 'PATCH'
+            method: 'PATCH',
+            credentials: 'include'
         });
-        
+
+        if (response.status === 401) { window.location.href = '/'; return; }
         if (response.ok) {
             loadDashboard();
         }

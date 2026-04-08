@@ -58,18 +58,11 @@ async function logout() {
     }
 }
 
-// Save token from URL (after OAuth callback)
+// Clean up any stale token query params left in the URL
 function saveTokenFromURL() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-
-    if (token) {
-        localStorage.setItem('access_token', token);
+    if (window.location.search.includes('token=')) {
         window.history.replaceState({}, document.title, window.location.pathname);
-        return token;
     }
-
-    return localStorage.getItem('access_token');
 }
 
 // Update UI based on auth state

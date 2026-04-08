@@ -6,7 +6,7 @@ from starlette.config import Config as StarletteConfig
 from jose import jwt, JWTError
 import bcrypt
 from pydantic import BaseModel
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 import os
 
@@ -50,9 +50,9 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     """Create JWT access token"""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
@@ -66,6 +66,23 @@ def verify_token(token: str):
         return payload
     except JWTError:
         return None
+
+
+def get_current_user_id(request: Request) -> str:
+    token = request.cookies.get("access_token")
+    if not token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    payload = verify_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+    return user_id
 
 
 @router.get("/auth/login")
@@ -102,8 +119,8 @@ async def auth_callback(request: Request, db: Session = Depends(get_db)):
             data={"user_id": user.id, "email": user.email}
         )
         
-        # Redirect to frontend with token
-        response = RedirectResponse(url=f"{settings.FRONTEND_URL}/?token={access_token}")
+        # Redirect to frontend; token is delivered via httpOnly cookie only
+        response = RedirectResponse(url=f"{settings.FRONTEND_URL}/")
         response.set_cookie(
             key="access_token",
             value=access_token,

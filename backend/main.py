@@ -18,11 +18,14 @@ async def lifespan(app: FastAPI):
 
     from database import SessionLocal
     from services import LeaderboardEngine
+    from seed_data import run as seed
     db = SessionLocal()
     try:
         LeaderboardEngine(db).initialize_leagues()
     finally:
         db.close()
+
+    seed()
 
     yield
 

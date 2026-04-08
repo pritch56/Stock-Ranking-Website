@@ -1,17 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from pydantic import BaseModel
 from database import get_db
 from models import Bot, Trade, Performance
 from services import PerformanceEngine, TradingEngine
+from routes.auth import get_current_user_id
 from typing import Optional, List
 from datetime import datetime
 
 router = APIRouter()
 
 class CreateBotRequest(BaseModel):
-    user_id: str
     name: str
     strategy_type: str
     description: Optional[str] = None
@@ -29,10 +29,11 @@ class BotResponse(BaseModel):
 @router.post("/bots", response_model=BotResponse)
 async def create_bot(
     bot_request: CreateBotRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
 ):
     """Create a new trading bot"""
-    
+
     # Validate strategy type
     valid_strategies = ["ML", "HFT", "Sentiment", "Technical", "Arbitrage", "Custom"]
     if bot_request.strategy_type not in valid_strategies:
@@ -40,10 +41,10 @@ async def create_bot(
             status_code=400,
             detail=f"Invalid strategy type. Must be one of: {', '.join(valid_strategies)}"
         )
-    
+
     # Create bot
     bot = Bot(
-        user_id=bot_request.user_id,
+        user_id=user_id,
         name=bot_request.name,
         strategy_type=bot_request.strategy_type,
         description=bot_request.description,
@@ -106,15 +107,23 @@ async def get_bot_performance(
 async def get_bot_trades(
     bot_id: str,
     limit: int = 100,
+    since: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
-    """Get trade history for a bot"""
-    
-    trades = db.query(Trade).filter(
-        Trade.bot_id == bot_id
-    ).order_by(
-        Trade.timestamp.desc()
-    ).limit(limit).all()
+    """Get trade history for a bot. `since` accepts an ISO-8601 datetime string."""
+    from datetime import timezone as _tz
+
+    query = db.query(Trade).filter(Trade.bot_id == bot_id)
+    if since:
+        try:
+            since_dt = datetime.fromisoformat(since)
+            if since_dt.tzinfo is None:
+                since_dt = since_dt.replace(tzinfo=_tz.utc)
+            query = query.filter(Trade.timestamp >= since_dt)
+        except ValueError:
+            pass
+
+    trades = query.order_by(Trade.timestamp.asc()).limit(limit).all()
     
     return {
         "bot_id": bot_id,
@@ -218,27 +227,31 @@ async def get_live_trades(limit: int = 20, db: Session = Depends(get_db)):
 
 
 @router.patch("/bots/{bot_id}/activate")
-async def activate_bot(bot_id: str, db: Session = Depends(get_db)):
+async def activate_bot(bot_id: str, db: Session = Depends(get_db), user_id: str = Depends(get_current_user_id)):
     """Activate a bot"""
-    
+
     bot = db.query(Bot).filter(Bot.id == bot_id).first()
     if not bot:
         raise HTTPException(status_code=404, detail="Bot not found")
-    
+    if bot.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+
     bot.is_active = True
     db.commit()
-    
+
     return {"message": "Bot activated", "bot_id": bot_id}
 
 @router.patch("/bots/{bot_id}/deactivate")
-async def deactivate_bot(bot_id: str, db: Session = Depends(get_db)):
+async def deactivate_bot(bot_id: str, db: Session = Depends(get_db), user_id: str = Depends(get_current_user_id)):
     """Deactivate a bot"""
-    
+
     bot = db.query(Bot).filter(Bot.id == bot_id).first()
     if not bot:
         raise HTTPException(status_code=404, detail="Bot not found")
-    
+    if bot.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+
     bot.is_active = False
     db.commit()
-    
+
     return {"message": "Bot deactivated", "bot_id": bot_id}

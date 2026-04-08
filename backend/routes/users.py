@@ -67,7 +67,8 @@ async def get_user_bots(user_id: str, db: Session = Depends(get_db)):
                 "name": b.name,
                 "strategy_type": b.strategy_type,
                 "current_capital": b.current_capital,
-                "is_active": b.is_active
+                "is_active": b.is_active,
+                "api_key": b.api_key,
             }
             for b in bots
         ]

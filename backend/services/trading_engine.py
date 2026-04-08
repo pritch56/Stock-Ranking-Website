@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from models import Bot, Trade, Signal, TradeAction
 from config import settings
 import random
-from datetime import datetime
+from datetime import datetime, timezone
 
 class TradingEngine:
     """Handles trade execution and simulation"""
@@ -41,7 +41,7 @@ class TradingEngine:
             quantity=quantity,
             value=trade_value,
             slippage=slipped_price - price,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.now(timezone.utc)
         )
         
         # Update bot capital

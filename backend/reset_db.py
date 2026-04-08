@@ -7,7 +7,7 @@ if __name__ == "__main__":
     print("Dropping all tables with CASCADE...")
     with engine.connect() as conn:
         # Drop all tables that might exist
-        tables = ['trades', 'signals', 'rankings', 'performances', 'league_entries', 'bots', 'leagues', 'users']
+        tables = ['trades', 'signals', 'rankings', 'performance', 'bots', 'leagues', 'users']
         for table in tables:
             try:
                 conn.execute(text(f"DROP TABLE IF EXISTS {table} CASCADE"))

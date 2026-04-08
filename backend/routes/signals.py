@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from database import get_db
@@ -115,7 +115,7 @@ async def submit_signal(
         signal_record.error_message = str(e)
         db.commit()
 
-        return SignalResponse(success=False, message=f"Trade execution failed: {e}")
+        raise HTTPException(status_code=500, detail="Trade execution failed")
 
 
 @router.get("/signal/history/{bot_id}")

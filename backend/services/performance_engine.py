@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from models import Bot, Trade, Performance
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import math
 
 class PerformanceEngine:
@@ -67,7 +67,7 @@ class PerformanceEngine:
         performance.peak_capital = self.calculate_peak_capital(trades, bot.initial_capital)
         performance.period_start = period_start
         performance.period_end = period_end
-        performance.updated_at = datetime.utcnow()
+        performance.updated_at = datetime.now(timezone.utc)
         
         self.db.merge(performance)
         self.db.commit()
@@ -207,7 +207,7 @@ class PerformanceEngine:
     def get_period_dates(self, period: str):
         """Get start and end dates for a period"""
         
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         
         if period == "week":
             start_date = end_date - timedelta(days=7)

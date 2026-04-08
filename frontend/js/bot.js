@@ -8,6 +8,7 @@ const API_BASE_URL = (() => {
 
 let currentPeriod = 'month';
 let botId = null;
+let botCreatedAt = null;
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
@@ -44,7 +45,9 @@ async function loadBotProfile() {
         // Load bot details
         const botResponse = await fetch(`${API_BASE_URL}/bots/${botId}`);
         const bot = await botResponse.json();
-        
+
+        botCreatedAt = bot.created_at ? new Date(bot.created_at) : null;
+
         displayBotHeader(bot);
         loadPerformanceData();
         loadTradeHistory();
@@ -83,7 +86,7 @@ async function loadPerformanceData() {
         const performance = await response.json();
         
         displayPerformanceMetrics(performance);
-        updateEquityChart(performance);
+        await updateEquityChart(performance);
         updateReturnsChart(performance);
     } catch (error) {
         console.error('Error loading performance:', error);
@@ -104,13 +107,60 @@ function displayPerformanceMetrics(performance) {
     document.getElementById('metric-trades').textContent = performance.total_trades.toLocaleString();
 }
 
-// Update equity curve chart
-function updateEquityChart(performance) {
+// Update equity curve chart using real trade data
+async function updateEquityChart(performance) {
     const ctx = document.getElementById('equity-chart');
-    
-    // Generate mock equity data
-    const days = currentPeriod === 'week' ? 7 : currentPeriod === 'month' ? 30 : currentPeriod === 'year' ? 365 : 1825;
-    const equityData = generateEquityCurve(100000, performance.total_return, days);
+
+    const MS_PER_DAY = 86400000;
+    const periodDays = currentPeriod === 'week' ? 7 : currentPeriod === 'month' ? 30 : currentPeriod === 'year' ? 365 : 1825;
+    const initial = performance.initial_capital || 100000;
+
+    const now = new Date();
+    const periodStart = new Date(now.getTime() - periodDays * MS_PER_DAY);
+
+    // Fetch all real trades in the period — always start from periodStart so we
+    // never miss trades whose timestamps predate the bot's created_at field.
+    let trades = [];
+    try {
+        const resp = await fetch(`${API_BASE_URL}/bots/${botId}/trades?limit=10000&since=${periodStart.toISOString()}`);
+        if (resp.ok) {
+            const data = await resp.json();
+            trades = (data.trades || []).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        }
+    } catch (e) { /* no trades — leave array empty */ }
+
+    // The curve is flat at initial_capital until the first trade (or bot creation,
+    // whichever is later), then follows cumulative P&L from actual trades.
+    const firstTradeTime = trades.length > 0 ? new Date(trades[0].timestamp) : null;
+    const flatUntil = firstTradeTime ?? now; // flat for the whole period if no trades
+
+    const labels = [];
+    const equityData = [];
+    let equity = initial;
+    let tradeIdx = 0;
+
+    for (let d = 0; d <= periodDays; d++) {
+        const dayStart = new Date(periodStart.getTime() + d * MS_PER_DAY);
+        const dayEnd   = new Date(dayStart.getTime() + MS_PER_DAY);
+
+        // Before first trade: flat at initial capital, no randomness
+        if (dayStart < flatUntil) {
+            labels.push(dayStart.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' }));
+            equityData.push(initial);
+            continue;
+        }
+
+        // Apply every trade that falls within this day
+        while (tradeIdx < trades.length && new Date(trades[tradeIdx].timestamp) < dayEnd) {
+            const t = trades[tradeIdx++];
+            equity += t.action === 'SELL' ? t.value : -t.value;
+        }
+
+        labels.push(dayStart.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' }));
+        equityData.push(equity);
+    }
+
+    const rising = equityData[equityData.length - 1] >= equityData[0];
     
     if (window.equityChart) {
         window.equityChart.destroy();
@@ -119,20 +169,18 @@ function updateEquityChart(performance) {
     window.equityChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: equityData.map((_, i) => i),
+            labels,
             datasets: [{
                 label: 'Equity',
                 data: equityData,
-                borderColor: performance.total_return >= 0 ? '#22C55E' : '#EF4444',
-                backgroundColor: performance.total_return >= 0 
-                    ? 'rgba(34, 197, 94, 0.1)' 
-                    : 'rgba(239, 68, 68, 0.1)',
+                borderColor: rising ? '#22C55E' : '#EF4444',
+                backgroundColor: rising ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
                 borderWidth: 2,
                 fill: true,
-                tension: 0.4,
+                tension: 0,
                 pointRadius: 0,
                 pointHoverRadius: 6,
-                pointHoverBackgroundColor: performance.total_return >= 0 ? '#22C55E' : '#EF4444',
+                pointHoverBackgroundColor: rising ? '#22C55E' : '#EF4444',
                 pointHoverBorderColor: '#fff',
                 pointHoverBorderWidth: 2
             }]
@@ -417,20 +465,6 @@ function displayRankings(rankings) {
     });
 }
 
-// Generate mock equity curve
-function generateEquityCurve(initial, totalReturn, days) {
-    const data = [initial];
-    let currentValue = initial;
-    const dailyReturn = Math.pow(1 + totalReturn, 1 / days);
-    
-    for (let i = 1; i < days; i++) {
-        const randomness = 1 + (Math.random() - 0.5) * 0.02;
-        currentValue = currentValue * dailyReturn * randomness;
-        data.push(currentValue);
-    }
-    
-    return data;
-}
 
 // Generate returns distribution
 function generateReturnsDistribution(winRate) {
@@ -471,7 +505,6 @@ function displayMockPerformance() {
     };
     
     displayPerformanceMetrics(mockPerformance);
-    updateEquityChart(mockPerformance);
     updateReturnsChart(mockPerformance);
 }
 
