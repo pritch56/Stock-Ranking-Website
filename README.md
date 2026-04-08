@@ -1,181 +1,132 @@
-# Trading Bot League Platform
+# Trading Bot League
 
-A complete production-ready web platform for algorithmic trading bot competitions. Bots compete in performance leagues with real-time rankings, performance analytics, and trade execution.
+A web platform for algorithmic trading bot competitions. Bots compete in performance leagues with real-time rankings, analytics, and simulated trade execution.
 
-## 🚀 Features
+---
 
-### Core Features
-- **Bot Registration** - Create and manage multiple trading bots
-- **Signal API** - Submit trade signals via REST API
-- **Simulated Trading** - Fair execution with price slippage modeling
-- **Performance Analytics** - Return, Sharpe Ratio, Max Drawdown, Win Rate
-- **League System** - Compete in strategy-specific leagues (ML, HFT, Sentiment, Technical, Arbitrage)
-- **Real-time Leaderboards** - Live rankings with WebSocket updates
-- **Interactive Charts** - Equity curves, performance visualization
-- **Dashboard** - Manage bots, view trades, track performance
+## Running the Project
 
-### Technical Features
-- **FastAPI Backend** - High-performance async Python API
-- **PostgreSQL Database** - Reliable data storage via Supabase
-- **WebSocket Support** - Real-time updates
-- **Redis Caching** - Fast leaderboard queries
-- **Background Workers** - Automated performance calculations
-- **Docker Deployment** - Easy containerized setup
-- **Modern UI** - Animated, responsive frontend with TailwindCSS
+### Docker (recommended)
 
-## 📋 Technology Stack
+Requires Docker and Docker Compose.
 
-### Backend
-- **Language**: Python 3.11+
-- **Framework**: FastAPI
-- **ORM**: SQLAlchemy
-- **Database**: PostgreSQL (Supabase)
-- **Cache**: Redis
-- **Workers**: Celery/Python
-- **Server**: Uvicorn
-
-### Frontend
-- **HTML5** with semantic markup
-- **TailwindCSS** for styling
-- **Vanilla JavaScript** for interactivity
-- **Chart.js** for data visualization
-- **Particles.js** for animated backgrounds
-- **WebSocket** for real-time updates
-
-### Infrastructure
-- **Docker** & Docker Compose
-- **Nginx** for reverse proxy
-- **PostgreSQL** database
-- **Redis** message broker
-
-## 🛠️ Installation & Setup
-
-### Prerequisites
-- Docker and Docker Compose
-- Python 3.11+ (for local development)
-- PostgreSQL (or use Supabase)
-- Redis
-
-### Quick Start with Docker
-
-1. **Clone the repository**
-```powershell
-cd c:\Stock-Ranking-Website
-```
-
-2. **Configure environment variables**
-```powershell
-cp backend\.env.example backend\.env
-# Edit backend\.env with your configuration
-```
-
-3. **Start all services**
-```powershell
+```bash
 docker-compose up -d
 ```
 
-4. **Access the application**
-- Frontend: http://localhost
-- Backend API: http://localhost:8000
-- API Docs: http://localhost:8000/docs
+This starts PostgreSQL, Redis, the FastAPI backend, a performance worker, and an Nginx frontend server.
 
-### Local Development Setup
+| Service     | URL                                      |
+|-------------|------------------------------------------|
+| Frontend    | <http://localhost>                       |
+| Backend API | <http://localhost:8000>                  |
+| API docs    | <http://localhost:8000/docs>             |
 
-#### Backend Setup
+Before starting in production, change the hardcoded credentials in `docker-compose.yml` (`POSTGRES_PASSWORD`, `SECRET_KEY`).
 
-1. **Create virtual environment**
-```powershell
+### Local Development
+
+#### Backend
+
+```bash
 cd backend
 python -m venv venv
-.\venv\Scripts\Activate.ps1
-```
-
-2. **Install dependencies**
-```powershell
+source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+cp .env.example .env            # then fill in DATABASE_URL, REDIS_URL, SECRET_KEY
+uvicorn main:app --reload
 ```
 
-3. **Configure environment**
-```powershell
-cp .env.example .env
-# Edit .env with your database and API credentials
-```
+The API will be available at <http://localhost:8000>.
 
-4. **Run the backend**
-```powershell
-python main.py
-```
+#### Frontend
 
-#### Frontend Setup
+The frontend is static HTML/CSS/JS. Serve it with any local server:
 
-The frontend is static HTML/CSS/JS. Simply open `frontend/index.html` in a browser or serve via a local server:
-
-```powershell
+```bash
 cd frontend
 python -m http.server 8080
 ```
 
-Then access: http://localhost:8080
+Then open <http://localhost:8080>.
 
-## 📊 Database Schema
+---
 
-### Tables
-- **users** - User accounts
-- **bots** - Trading bot profiles
-- **trades** - Executed trades
-- **signals** - Incoming trade signals
-- **performance** - Performance metrics by period
-- **leagues** - Strategy leagues
-- **rankings** - Bot rankings per league
+## Environment Variables
 
-## 🔌 API Documentation
+Copy `backend/.env.example` to `backend/.env` and set the following:
 
-### Authentication
-Bots authenticate using API keys sent in the `X-API-Key` header.
+| Variable          | Description                             |
+|-------------------|-----------------------------------------|
+| `DATABASE_URL`    | PostgreSQL connection string            |
+| `REDIS_URL`       | Redis connection string                 |
+| `SECRET_KEY`      | Secret key for session signing          |
+| `SUPABASE_URL`    | Supabase project URL (optional)         |
+| `SUPABASE_KEY`    | Supabase anon key (optional)            |
+| `POLYGON_API_KEY` | Polygon.io market data key (optional)   |
+| `ALPACA_API_KEY`  | Alpaca market data key (optional)       |
 
-### Core Endpoints
+---
 
-#### Submit Trade Signal
+## Stack
+
+- **Backend:** Python 3.11, FastAPI, SQLAlchemy, PostgreSQL, Redis, Uvicorn
+- **Frontend:** HTML5, TailwindCSS, Vanilla JS, Chart.js, Particles.js
+- **Infrastructure:** Docker Compose, Nginx
+
+---
+
+## API Reference
+
+Bots authenticate with an API key in the `X-API-Key` header.
+
+### Submit a trade signal
+
 ```http
 POST /api/signal
-X-API-Key: your-bot-api-key
+X-API-Key: <bot-api-key>
+Content-Type: application/json
 
 {
-  "bot_id": "bot-uuid",
+  "bot_id": "<uuid>",
   "ticker": "AAPL",
   "action": "BUY",
   "quantity": 10.0
 }
 ```
 
-#### Create Bot
+### Create a bot
+
 ```http
 POST /api/bots
+Content-Type: application/json
 
 {
-  "user_id": "user-uuid",
-  "name": "My Trading Bot",
+  "user_id": "<uuid>",
+  "name": "My Bot",
   "strategy_type": "ML",
-  "description": "Machine learning based strategy",
+  "description": "Machine learning strategy",
   "initial_capital": 100000.0
 }
 ```
 
-#### Get Leaderboard
+### Leaderboard
+
 ```http
 GET /api/leaderboard?period=month&league=global&limit=100
 ```
 
-#### Get Bot Performance
+### Bot performance
+
 ```http
-GET /api/bot/{bot_id}/performance?period=month
+GET /api/bot/<bot_id>/performance?period=month
 ```
 
-Full API documentation available at: http://localhost:8000/docs
+Full interactive docs at <http://localhost:8000/docs>.
 
-## 🤖 Bot Integration Guide
+---
 
-### Python Example
+## Python Client Example
 
 ```python
 import requests
@@ -184,162 +135,59 @@ API_URL = "http://localhost:8000/api"
 BOT_ID = "your-bot-id"
 API_KEY = "your-api-key"
 
-# Submit a trade signal
-def submit_trade(ticker, action, quantity):
-    headers = {
-        "X-API-Key": API_KEY
-    }
-    data = {
-        "bot_id": BOT_ID,
-        "ticker": ticker,
-        "action": action,  # "BUY" or "SELL"
-        "quantity": quantity
-    }
-    
-    response = requests.post(
+def submit_signal(ticker, action, quantity):
+    return requests.post(
         f"{API_URL}/signal",
-        json=data,
-        headers=headers
-    )
-    
-    return response.json()
+        json={"bot_id": BOT_ID, "ticker": ticker, "action": action, "quantity": quantity},
+        headers={"X-API-Key": API_KEY},
+    ).json()
 
-# Example: Buy 10 shares of AAPL
-result = submit_trade("AAPL", "BUY", 10.0)
-print(result)
+result = submit_signal("AAPL", "BUY", 10.0)
 ```
-
-## 🏆 League System
-
-Bot compete in multiple leagues simultaneously:
-
-- **Global League** - All bots compete together
-- **ML League** - Machine learning strategies
-- **HFT League** - High frequency trading
-- **Sentiment League** - Sentiment analysis based
-- **Technical League** - Technical analysis strategies
-- **Arbitrage League** - Arbitrage strategies
-
-Rankings are calculated for multiple time periods:
-- Weekly
-- Monthly
-- Yearly
-- 5-Year
-
-## 📈 Performance Metrics
-
-### Calculated Metrics
-- **Total Return** - % gain/loss from initial capital
-- **Sharpe Ratio** - Risk-adjusted return
-- **Max Drawdown** - Largest peak-to-trough decline
-- **Win Rate** - % of profitable trades
-- **Total Trades** - Number of executed trades
-
-### Ranking Score
-Bots are ranked by a weighted score:
-```
-Score = (Return × 0.6) + (Sharpe Ratio / 10 × 0.4)
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-
-```env
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/botleague
-
-# Supabase (optional)
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-key
-
-# Security
-SECRET_KEY=your-secret-key
-ALGORITHM=HS256
-
-# Redis
-REDIS_URL=redis://localhost:6379
-
-# Trading
-INITIAL_CAPITAL=100000.0
-MAX_POSITION_SIZE=1.0
-SLIPPAGE_BPS=5.0
-
-# Market Data (optional)
-POLYGON_API_KEY=your-key
-ALPACA_API_KEY=your-key
-```
-
-## 🎨 Frontend Pages
-
-- **Landing Page** (`index.html`) - Hero section, features, leaderboard preview
-- **Leaderboard** (`leaderboard.html`) - Full rankings with filters
-- **Dashboard** (`dashboard.html`) - User control center
-- **Bot Profile** (`bot.html`) - Detailed bot analytics
-
-## 🚀 Deployment
-
-### Production Considerations
-
-1. **Environment Variables** - Set secure keys
-2. **Database** - Use managed PostgreSQL (Supabase recommended)
-3. **SSL/TLS** - Enable HTTPS
-4. **Rate Limiting** - Configure appropriate limits
-5. **Monitoring** - Set up logging and alerting
-6. **Backups** - Regular database backups
-
-### Deployment Options
-
-- **Vercel** (Frontend)
-- **Fly.io** or **AWS EC2** (Backend)
-- **Supabase** (Database)
-- **Cloudflare** (CDN)
-
-## 📝 Development Roadmap
-
-### Phase 1 - MVP (Current)
-- [x] User accounts
-- [x] Bot registration
-- [x] Signal API
-- [x] Simulated trading
-- [x] Performance metrics
-- [x] Leaderboards
-- [x] Basic UI
-
-### Phase 2 - Enhancements
-- [ ] Real broker integration (Alpaca, IB)
-- [ ] Advanced charts
-- [ ] Strategy marketplace
-- [ ] Social features
-- [ ] Mobile app
-
-### Phase 3 - Scale
-- [ ] Copy trading
-- [ ] AI ranking
-- [ ] Public API
-- [ ] White-label solution
-
-## 🤝 Contributing
-
-Contributions welcome! Please read the contributing guidelines before submitting PRs.
-
-## 📄 License
-
-Proprietary - All rights reserved
-
-## 🆘 Support
-
-For support, email support@tradingbotleague.com or open an issue.
-
-## 🙏 Acknowledgments
-
-Built with:
-- FastAPI
-- SQLAlchemy
-- Chart.js
-- TailwindCSS
-- Particles.js
 
 ---
 
-**Built with ❤️ for algorithmic trading enthusiasts**
+## League System
+
+Bots are ranked across multiple leagues and time periods.
+
+- **Leagues:** Global, ML, HFT, Sentiment, Technical, Arbitrage
+- **Periods:** Weekly, Monthly, Yearly, 5-Year
+- **Metrics:** Total return, Sharpe ratio, max drawdown, win rate, trade count
+
+Ranking score:
+
+```
+Score = (Total Return × 0.6) + (Sharpe Ratio / 10 × 0.4)
+```
+
+---
+
+## Database Schema
+
+| Table         | Description                    |
+|---------------|--------------------------------|
+| `users`       | User accounts                  |
+| `bots`        | Bot profiles                   |
+| `trades`      | Executed trades                |
+| `signals`     | Incoming trade signals         |
+| `performance` | Metrics by bot and period      |
+| `leagues`     | Strategy leagues               |
+| `rankings`    | Bot rankings per league        |
+
+---
+
+## Frontend Pages
+
+| File               | Purpose                                   |
+|--------------------|-------------------------------------------|
+| `index.html`       | Landing page with leaderboard preview     |
+| `leaderboard.html` | Full rankings with filters                |
+| `dashboard.html`   | User and bot management                   |
+| `bot.html`         | Per-bot analytics and trade history       |
+
+---
+
+## Licence
+
+Proprietary. All rights reserved.
